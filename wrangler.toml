@@ -1,0 +1,14 @@
+name = "workout-library"
+main = "src/worker.js"
+compatibility_date = "2025-04-01"
+account_id = "681f0c5e92719198aa9688776079097e"
+workers_dev = true
+
+routes = [
+  { pattern = "wl.dreambody.club/*", zone_name = "dreambody.club" }
+]
+
+[[d1_databases]]
+binding = "DB_CONTENT"
+database_name = "dbc-content"
+database_id = "80145bdd-402d-45af-b76b-26591281a095"
