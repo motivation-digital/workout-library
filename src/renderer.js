@@ -434,15 +434,13 @@ export function renderWorkoutPage(w) {
   const sidebar = buildWorkoutFilterSidebar(activeTags);
 
   const pageCss = `
-#wp-topbar{position:fixed;top:0;left:250px;right:0;height:52px;background:#ffffff;border-bottom:1px solid #DDD9D0;display:flex;align-items:center;padding:0 20px;z-index:99;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
-#wp-main{margin-left:250px;margin-top:52px}
+#wp-main{margin-left:250px;margin-top:0}
 #wp-content{max-width:800px;margin:0 auto;padding:32px 24px 80px}
 .wp-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid #DDD9D0;border-radius:20px;font-size:13px;color:#3A3A34;background:#fff}
 .wp-tag i{color:#97976A;font-size:12px}
 @media(max-width:1440px){
   #dbc-sidebar{transform:translateX(-240px)}
   #dbc-chk:checked~#dbc-sidebar{transform:translateX(0)}
-  #wp-topbar{left:0!important;padding-left:60px}
   #wp-main{margin-left:0}
   #dbc-ham{display:flex!important}
   #dbc-chk:checked~#dbc-ham{left:248px!important}
@@ -463,9 +461,7 @@ export function renderWorkoutPage(w) {
       : '';
 
   const metaTags = [
-    w.category ? `<span class="wp-tag"><i class="fa-solid fa-layer-group"></i>${esc(w.category)}</span>` : '',
     w.duration_min ? `<span class="wp-tag"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span>` : '',
-    w.wistia_id ? `<span class="wp-tag"><i class="fa-solid fa-video"></i>Видео</span>` : '',
   ].filter(Boolean).join('');
 
   const kajabiFallback = !w.wistia_id && w.kajabi_url
@@ -478,22 +474,9 @@ export function renderWorkoutPage(w) {
 <input type="checkbox" id="dbc-chk" style="position:fixed;opacity:0;pointer-events:none;z-index:-1">
 <label for="dbc-chk" id="dbc-ham" style="display:none;position:fixed;top:10px;left:10px;z-index:102;align-items:center;justify-content:center;cursor:pointer;padding:6px;border-radius:4px"><i class="fa-solid fa-bars" style="font-size:32px;color:#3A3A34"></i></label>
 ${sidebar}
-<div id="wp-topbar">
-  <div id="tb-profile" style="margin-left:auto">
-    <button id="tb-profile-btn" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit" onclick="var d=document.getElementById('tb-dd');d.style.display=d.style.display==='block'?'none':'block'">
-      <div id="tb-avatar" style="width:30px;height:30px;border-radius:50%;background:#97976A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px"><i class="fa-solid fa-user"></i></div>
-      <i class="fa-solid fa-chevron-down" style="font-size:10px;color:#8A8A82;margin-left:2px"></i>
-    </button>
-    <div id="tb-dd" style="display:none;position:absolute;right:20px;top:46px;background:#fff;border:1px solid #DDD9D0;border-radius:6px;min-width:160px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:200">
-      <a href="https://www.dreambody.club/profile" style="display:block;padding:10px 16px;font-size:13px;color:#3A3A34;text-decoration:none">Профиль</a>
-      <a href="https://www.dreambody.club/logout" style="display:block;padding:10px 16px;font-size:13px;color:#6A6A62;text-decoration:none;border-top:1px solid #E8E5DD">Выйти</a>
-    </div>
-  </div>
-</div>
 <label for="dbc-chk" id="dbc-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:98"></label>
 <main id="wp-main">
   <div id="wp-content">
-    ${w.category ? `<div style="font-size:11px;font-weight:700;color:#97976A;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">${esc(w.category)}</div>` : ''}
     <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:16px">${esc(w.title)}</h1>
     ${metaTags ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${metaTags}</div>` : ''}
     ${videoSection}
@@ -501,11 +484,5 @@ ${sidebar}
     ${kajabiFallback}
   </div>
 </main>
-<script>
-document.addEventListener('click',function(e){
-  var dd=document.getElementById('tb-dd');
-  if(dd&&!document.getElementById('tb-profile').contains(e.target))dd.style.display='none';
-});
-<\/script>
 </body></html>`;
 }
