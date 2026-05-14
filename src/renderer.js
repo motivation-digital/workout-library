@@ -451,7 +451,7 @@ export function renderWorkoutPage(w) {
 
   const videoSection = w.wistia_id
     ? `<div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:28px;background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.12)">
-        <iframe src="https://fast.wistia.net/embed/iframe/${esc(w.wistia_id)}?videoFoam=true" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen style="width:100%;height:100%;display:block"></iframe>
+        <iframe src="https://fast.wistia.net/embed/iframe/${esc(w.wistia_id)}?videoFoam=true&playerColor=97976A" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen style="width:100%;height:100%;display:block"></iframe>
       </div>`
     : w.image_url
       ? `<div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:28px;position:relative;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
