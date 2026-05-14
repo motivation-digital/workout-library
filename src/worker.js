@@ -16,7 +16,7 @@ function corsHeaders(req) {
 function json(data, req, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders(req) }
+    headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
   });
 }
 
@@ -35,32 +35,25 @@ export default {
 
     // Health
     if (path === '/health') {
-      const { results } = await env.DB_CONTENT.prepare('SELECT COUNT(*) as n FROM workout_library').all();
-      return json({ ok: true, rows: results[0].n }, req);
+      const row = await env.DB_CONTENT.prepare('SELECT COUNT(*) as n FROM workout_library WHERE status = ?').bind('active').first();
+      return json({ ok: true, rows: row?.n ?? 0 }, req);
     }
 
-    // API: recommend a workout (called by aicoach or dashboard)
+    // API: recommend a workout (used by aicoach and dashboard)
     if (path === '/api/recommend') {
       const category = url.searchParams.get('category') || null;
-      const seed = url.searchParams.get('seed') || String(Date.now());
       let q = 'SELECT * FROM workout_library WHERE status = ?';
       const params = ['active'];
       if (category) { q += ' AND category = ?'; params.push(category); }
-      q += ' ORDER BY RANDOM() LIMIT 1';
-      // Use seed for deterministic selection
-      const { results } = await env.DB_CONTENT.prepare(
-        'SELECT * FROM workout_library WHERE status = ? ' +
-        (category ? 'AND category = ? ' : '') +
-        'ORDER BY ABS(CAST(kajabi_post_id AS INTEGER) - ?) LIMIT 20'
-      ).bind(...params, parseInt(seed, 10) || 0).all();
-      const row = results.length ? results[parseInt(seed, 36) % results.length || 0] : null;
-      return json({ workout: row }, req);
+      q += ' AND wistia_id IS NOT NULL ORDER BY RANDOM() LIMIT 1';
+      const row = await env.DB_CONTENT.prepare(q).bind(...params).first();
+      return json({ workout: row ?? null }, req);
     }
 
-    // API: all workouts as JSON
+    // API: list workouts as JSON
     if (path === '/api/workouts') {
       const category = url.searchParams.get('category') || null;
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 500);
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '200'), 500);
       const offset = parseInt(url.searchParams.get('offset') || '0');
       let q = 'SELECT kajabi_post_id, title, category, image_url, wistia_id, duration_min, kajabi_url, filter_tags FROM workout_library WHERE status = ?';
       const params = ['active'];
@@ -74,28 +67,29 @@ export default {
     // API: single workout JSON
     if (path.startsWith('/api/workout/')) {
       const postId = path.slice('/api/workout/'.length);
-      const row = await env.DB_CONTENT.prepare('SELECT * FROM workout_library WHERE kajabi_post_id = ?').bind(postId).first();
+      const row = await env.DB_CONTENT.prepare('SELECT * FROM workout_library WHERE kajabi_post_id = ? AND status = ?').bind(postId, 'active').first();
       if (!row) return json({ error: 'not found' }, req, 404);
       return json(row, req);
     }
 
-    // Dashboard: individual workout page
-    if (path.startsWith('/workout/')) {
-      const postId = path.slice('/workout/'.length);
-      const row = await env.DB_CONTENT.prepare('SELECT * FROM workout_library WHERE kajabi_post_id = ?').bind(postId).first();
+    // Individual workout page: /:kajabi_post_id (numeric)
+    const numericPath = path.match(/^\/(\d+)$/);
+    if (numericPath) {
+      const postId = numericPath[1];
+      const row = await env.DB_CONTENT.prepare('SELECT * FROM workout_library WHERE kajabi_post_id = ? AND status = ?').bind(postId, 'active').first();
       if (!row) return html('<h1>Not found</h1>', 404);
       return html(renderWorkoutPage(row));
     }
 
-    // Dashboard: workout index (/ or /workouts)
+    // Index
     if (path === '/' || path === '/workouts') {
       const { results: workouts } = await env.DB_CONTENT.prepare(
-        'SELECT kajabi_post_id, title, category, image_url, wistia_id, duration_min, kajabi_url FROM workout_library WHERE status = ? ORDER BY category, position'
+        'SELECT kajabi_post_id, title, category, image_url, wistia_id, duration_min, kajabi_url, filter_tags FROM workout_library WHERE status = ? ORDER BY category, position'
       ).bind('active').all();
-      const categories = [...new Set(workouts.map(w => w.category))].filter(Boolean);
+      const categories = [...new Set(workouts.map(w => w.category).filter(Boolean))].sort();
       return html(renderDashboard(workouts, categories));
     }
 
     return html('<h1>Not found</h1>', 404);
-  }
+  },
 };
