@@ -346,7 +346,6 @@ export function renderDashboard(workouts, categories) {
   const cardsHtml = workouts.map(w => {
     const tags = getTagIds(w);
     const tagsAttr = JSON.stringify(tags).replace(/"/g, '&quot;');
-    const dur = w.duration_min ? `<span class="wc-stat"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span>` : '';
     const img = w.image_url
       ? `<img src="${esc(w.image_url)}" alt="${esc(w.title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">`
       : `<div style="width:100%;height:100%;background:#DDD9D0"></div>`;
@@ -358,7 +357,6 @@ export function renderDashboard(workouts, categories) {
   <div class="wc-body">
     <div class="wc-title">${esc(w.title)}</div>
     ${pillsHtml}
-    <div class="wc-stats">${dur}</div>
   </div>
 </a>`;
   }).join('\n');
