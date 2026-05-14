@@ -5,7 +5,9 @@ function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function stripComments(html) {
-  return html ? html.replace(/<!--[\s\S]*?-->/g, '').trim() : html;
+  if (!html) return html;
+  // Remove complete HTML comments, then any unclosed <!-- tail
+  return html.replace(/<!--[\s\S]*?-->/g, '').replace(/<!--[\s\S]*/g, '').trim();
 }
 
 const NAV_ITEMS = [
