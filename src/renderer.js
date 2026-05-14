@@ -1,3 +1,6 @@
+function safeJson(str, fallback) {
+  try { return JSON.parse(str); } catch { return fallback; }
+}
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -12,25 +15,58 @@ const NAV_ITEMS = [
   { key: 'community',  label: 'СООБЩЕСТВО', icon: 'fa-solid fa-users',       url: 'https://www.dreambody.club/products/communities/v2/community3865443/home' },
 ];
 
-// Duration tag IDs — static (matched against duration_min)
-const DUR_TAGS = [
-  { id: 'wf1t1', label: '< 30 мин', durMin: 0,  durMax: 29   },
-  { id: 'wf1t2', label: '30–60 мин', durMin: 30, durMax: 60   },
-  { id: 'wf1t3', label: '> 60 мин',  durMin: 61, durMax: 9999 },
+const FILTER_GROUPS = [
+  { id: 'wf1', label: 'Время', type: 'pills', tags: [
+    { id: 'wf1t1', label: '15 мин' },
+    { id: 'wf1t2', label: '30 мин' },
+    { id: 'wf1t3', label: '45 мин' },
+    { id: 'wf1t4', label: '60 мин' },
+  ]},
+  { id: 'wf2', label: 'Интенсивность', type: 'accordion', open: true, tags: [
+    { id: 'wf2t1', label: 'Низкая' },
+    { id: 'wf2t2', label: 'Средняя' },
+    { id: 'wf2t3', label: 'Высокая' },
+  ]},
+  { id: 'wf3', label: 'Ваш уровень', type: 'accordion', open: true, tags: [
+    { id: 'wf3t1', label: 'Начинающий' },
+    { id: 'wf3t2', label: 'Средний' },
+    { id: 'wf3t3', label: 'Продвинутый' },
+  ]},
+  { id: 'wf4', label: 'Часть тела', type: 'accordion', open: true, tags: [
+    { id: 'wf4t1', label: 'Всё тело' },
+    { id: 'wf4t2', label: 'Руки' },
+    { id: 'wf4t3', label: 'Грудь' },
+    { id: 'wf4t4', label: 'Спина' },
+    { id: 'wf4t5', label: 'Пресс' },
+    { id: 'wf4t6', label: 'Ягодицы' },
+    { id: 'wf4t7', label: 'Ноги' },
+    { id: 'wf4t8', label: 'Тазовое дно' },
+  ]},
 ];
 
-function durTagId(duration_min) {
-  if (!duration_min) return null;
-  const d = Number(duration_min);
-  if (d < 30)  return 'wf1t1';
-  if (d <= 60) return 'wf1t2';
-  return 'wf1t3';
-}
+// Kajabi filter_tags string values → tag IDs
+const TAG_MAP = {
+  '15 мин': 'wf1t1', '30 мин': 'wf1t2', '45 мин': 'wf1t3', '60 мин': 'wf1t4',
+  'низкая': 'wf2t1', 'средняя': 'wf2t2', 'высокая': 'wf2t3',
+  'начинающий': 'wf3t1', 'средний': 'wf3t2', 'продвинутый': 'wf3t3',
+  'всё тело': 'wf4t1', 'руки': 'wf4t2', 'грудь': 'wf4t3', 'спина': 'wf4t4',
+  'пресс': 'wf4t5', 'ягодицы': 'wf4t6', 'ноги': 'wf4t7', 'тазовое дно': 'wf4t8',
+};
 
-function makeCatTagMap(categories) {
-  const m = {};
-  categories.forEach((cat, i) => { m[cat] = 'wf2t' + (i + 1); });
-  return m;
+function getTagIds(workout) {
+  const raw = safeJson(workout.filter_tags, []);
+  const ids = Array.isArray(raw)
+    ? raw.map(t => TAG_MAP[String(t).toLowerCase().trim()]).filter(Boolean)
+    : [];
+  // Infer time bucket from duration_min when filter_tags has no time tag
+  if (!ids.some(t => t.startsWith('wf1')) && workout.duration_min) {
+    const d = Number(workout.duration_min);
+    if (d <= 20) ids.push('wf1t1');
+    else if (d <= 35) ids.push('wf1t2');
+    else if (d <= 52) ids.push('wf1t3');
+    else ids.push('wf1t4');
+  }
+  return ids;
 }
 
 // ── DBC nav sidebar (index page) ─────────────────────────────────────────────
@@ -58,8 +94,8 @@ function buildSidebarNav() {
     + '</nav>';
 }
 
-// ── Filter sidebar (post/workout page — replaces DBC nav) ─────────────────────
-function buildWorkoutFilterSidebar(activeDurTag, activeCatTag, categories, catTagMap) {
+// ── Filter sidebar (post page — replaces DBC nav) ─────────────────────────────
+function buildWorkoutFilterSidebar(activeTagSet) {
   const logo = '<div style="height:52px;padding:0 16px;display:flex;align-items:center;border-bottom:1px solid #EDEBE4;flex-shrink:0">'
     + '<img src="https://imagedelivery.net/8taA81TQ4UD-fca9BHMP5A/1ce95ac2-a78a-41f1-83d4-768846b3f300/public" alt="DreamBodyClub" style="width:auto;max-width:185px;max-height:44px;display:block">'
     + '</div>';
@@ -68,34 +104,33 @@ function buildWorkoutFilterSidebar(activeDurTag, activeCatTag, categories, catTa
   filters += '<a href="/" style="display:flex;align-items:center;gap:5px;margin-bottom:16px;font-size:12px;font-weight:600;color:#97976A;text-decoration:none;padding:4px 2px">'
     + '<i class="fa-solid fa-arrow-left" style="font-size:10px"></i> Все тренировки</a>';
 
-  // Duration pills
-  filters += '<div class="fp-group"><div class="fp-label">Время</div><div class="fp-pills">';
-  DUR_TAGS.forEach(t => {
-    const on = t.id === activeDurTag ? ' fp-active' : '';
-    filters += '<a href="/?f=' + t.id + '" class="fp-pill' + on + '" style="text-decoration:none">' + esc(t.label) + '</a>';
+  FILTER_GROUPS.forEach(grp => {
+    if (grp.type === 'pills') {
+      filters += '<div class="fp-group"><div class="fp-label">' + esc(grp.label) + '</div><div class="fp-pills">';
+      grp.tags.forEach(t => {
+        const on = activeTagSet.has(t.id) ? ' fp-active' : '';
+        filters += '<a href="/?f=' + t.id + '" class="fp-pill' + on + '" style="text-decoration:none">' + esc(t.label) + '</a>';
+      });
+      filters += '</div></div>';
+    } else {
+      filters += '<details class="fp-group" open><summary class="fp-label">' + esc(grp.label) + '</summary><div class="fp-checks">';
+      grp.tags.forEach(t => {
+        const on = activeTagSet.has(t.id);
+        filters += '<a href="/?f=' + t.id + '" class="fp-row" style="text-decoration:none">'
+          + '<span class="fp-check' + (on ? ' fp-ck-on' : '') + '">' + (on ? '✓' : '') + '</span>'
+          + '<span class="fp-text">' + esc(t.label) + '</span>'
+          + '</a>';
+      });
+      filters += '</div></details>';
+    }
   });
-  filters += '</div></div>';
-
-  // Category accordion
-  if (categories.length) {
-    filters += '<details class="fp-group" open><summary class="fp-label">Категория</summary><div class="fp-checks">';
-    categories.forEach(cat => {
-      const tagId = catTagMap[cat] || '';
-      const on = tagId === activeCatTag;
-      filters += '<a href="/?f=' + esc(tagId) + '" class="fp-row" style="text-decoration:none">'
-        + '<span class="fp-check' + (on ? ' fp-ck-on' : '') + '">' + (on ? '✓' : '') + '</span>'
-        + '<span class="fp-text">' + esc(cat) + '</span>'
-        + '</a>';
-    });
-    filters += '</div></details>';
-  }
 
   filters += '</div>';
   return '<nav id="dbc-sidebar" style="width:240px;min-width:240px;background:#ffffff;border-right:1px solid #DDD9D0;display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;transition:transform 0.3s ease">'
     + logo + filters + '</nav>';
 }
 
-// ── Shared shell CSS ──────────────────────────────────────────────────────────
+// ── Shared CSS ────────────────────────────────────────────────────────────────
 const SHELL_CSS = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;max-width:none!important}
@@ -114,12 +149,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:#FAFAF5;-webkit-font-sm
 #tb-dd a{display:block;padding:10px 16px;font-size:13px;color:#3A3A34;text-decoration:none}
 #tb-dd a:hover{background:#F7F4EC}
 #tb-dd a+a{border-top:1px solid #E8E5DD;color:#6A6A62}
-/* Main layout */
 #dbc-main{position:fixed;top:52px;left:250px;right:0;bottom:0;overflow:hidden;display:flex}
-/* Filter panel */
 #fp-bar{display:none}
 #wl-filters{width:240px;min-width:240px;flex-shrink:0;overflow-y:auto;border-right:1px solid #DDD9D0;background:#fff;padding:16px}
-/* Filter groups */
 .fp-group{margin-bottom:18px}
 .fp-label{font-size:11px;font-weight:700;color:#3A3A34;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;user-select:none}
 details.fp-group>summary.fp-label{list-style:none;cursor:pointer}
@@ -141,10 +173,8 @@ details.fp-group[open]>summary.fp-label::after{transform:rotate(-135deg);margin-
 .fp-text{font-size:13px;color:#3A3A34;line-height:1.4}
 .fp-reset{display:block;margin-bottom:8px;text-align:center;font-size:12px;color:#97976A;cursor:pointer;text-decoration:none;font-weight:600;padding:6px}
 .fp-reset:hover{text-decoration:underline}
-/* Content + grid */
 #wl-content{flex:1;overflow-y:auto;padding:20px}
 #wl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-content:start}
-/* Cards */
 .wc{display:flex;flex-direction:column;background:#fff;border:1px solid #DDD9D0;border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s}
 .wc:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.10)}
 .wc-img{margin:8px 14px 0;border-radius:8px;border:1px solid #DDD9D0;overflow:hidden;aspect-ratio:16/10;background:#DDD9D0;flex-shrink:0}
@@ -155,11 +185,9 @@ details.fp-group[open]>summary.fp-label::after{transform:rotate(-135deg);margin-
 .wc-stats{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:6px}
 .wc-stat{display:flex;align-items:center;gap:4px;font-size:11px;color:#6A6A62}
 .wc-stat i{color:#97976A;font-size:11px}
-/* Grid breakpoints */
 @media(max-width:1300px){#wl-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){#wl-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){#wl-grid{grid-template-columns:1fr}}
-/* Sidebar collapses ≤1440px */
 @media(max-width:1440px){
   #dbc-sidebar{transform:translateX(-240px)}
   #dbc-chk:checked~#dbc-sidebar{transform:translateX(0)}
@@ -169,7 +197,6 @@ details.fp-group[open]>summary.fp-label::after{transform:rotate(-135deg);margin-
   #dbc-chk:checked~#dbc-ham{left:248px!important}
   #dbc-chk:checked~#dbc-overlay{display:block!important}
 }
-/* Filter panel collapses to drawer ≤700px */
 @media(max-width:700px){
   #dbc-main{flex-direction:column;overflow:hidden}
   #fp-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #DDD9D0;background:#fff;flex-shrink:0}
@@ -196,29 +223,26 @@ const SHELL_HEAD = (title) => `<!DOCTYPE html>
 
 export function renderDashboard(workouts, categories) {
   const sidebar = buildSidebarNav();
-  const catTagMap = makeCatTagMap(categories);
 
   // ── Filter panel HTML ───────────────────────────────────────────────────────
-  const durPills = DUR_TAGS.map(t =>
-    '<button class="fp-pill" data-grp="wf1" data-tag="' + t.id + '" onclick="togglePill(this,\'wf1\',\'' + t.id + '\')">' + esc(t.label) + '</button>'
-  ).join('');
-
-  const catChecks = categories.map(cat => {
-    const tagId = catTagMap[cat];
-    return '<label class="fp-row"><input class="fp-cb" type="checkbox" data-grp="wf2" data-tag="' + esc(tagId) + '" onchange="toggleCheck(this,\'wf2\',\'' + esc(tagId) + '\')"><span class="fp-check"></span><span class="fp-text">' + esc(cat) + '</span></label>';
+  const filterHtml = FILTER_GROUPS.map(grp => {
+    if (grp.type === 'pills') {
+      const pills = grp.tags.map(t =>
+        '<button class="fp-pill" data-grp="' + grp.id + '" data-tag="' + t.id + '" onclick="togglePill(this,\'' + grp.id + '\',\'' + t.id + '\')">' + esc(t.label) + '</button>'
+      ).join('');
+      return '<div class="fp-group"><div class="fp-label">' + esc(grp.label) + '</div><div class="fp-pills">' + pills + '</div></div>';
+    }
+    const checks = grp.tags.map(t =>
+      '<label class="fp-row"><input class="fp-cb" type="checkbox" data-grp="' + grp.id + '" data-tag="' + t.id + '" onchange="toggleCheck(this,\'' + grp.id + '\',\'' + t.id + '\')"><span class="fp-check"></span><span class="fp-text">' + esc(t.label) + '</span></label>'
+    ).join('');
+    const openAttr = grp.open !== false ? ' open' : '';
+    return '<details class="fp-group"' + openAttr + '><summary class="fp-label">' + esc(grp.label) + '</summary><div class="fp-checks">' + checks + '</div></details>';
   }).join('');
-
-  const filterHtml = '<div class="fp-group"><div class="fp-label">Время</div><div class="fp-pills">' + durPills + '</div></div>'
-    + '<details class="fp-group" open><summary class="fp-label">Категория</summary><div class="fp-checks">' + catChecks + '</div></details>';
 
   // ── Cards ───────────────────────────────────────────────────────────────────
   const cardsHtml = workouts.map(w => {
-    const tags = [];
-    const dt = durTagId(w.duration_min);
-    if (dt) tags.push(dt);
-    if (w.category && catTagMap[w.category]) tags.push(catTagMap[w.category]);
+    const tags = getTagIds(w);
     const tagsAttr = JSON.stringify(tags).replace(/"/g, '&quot;');
-
     const dur = w.duration_min ? `<span class="wc-stat"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span>` : '';
     const vid = w.wistia_id ? `<span class="wc-stat"><i class="fa-solid fa-play"></i>Видео</span>` : '';
     const img = w.image_url
@@ -233,6 +257,9 @@ export function renderDashboard(workouts, categories) {
   </div>
 </a>`;
   }).join('\n');
+
+  const grpKeys = FILTER_GROUPS.map(g => g.id);
+  const afInit = '{' + grpKeys.map(k => k + ':new Set()').join(',') + '}';
 
   return `${SHELL_HEAD('DreamBodyClub — Тренировки')}
 <body>
@@ -271,7 +298,8 @@ ${sidebar}
   </div>
 </main>
 <script>
-var _af={wf1:new Set(),wf2:new Set()};
+var _af=${afInit};
+var _grpKeys=${JSON.stringify(grpKeys)};
 var _cards,_cnt,_mcnt,_srch;
 function _init(){
   _cards=document.querySelectorAll('.wc');
@@ -282,13 +310,13 @@ function _init(){
 function applyFilters(){
   if(!_cards)_init();
   var q=(_srch?_srch.value:'').toLowerCase().trim();
-  var vis=0,grpKeys=['wf1','wf2'];
+  var vis=0;
   _cards.forEach(function(c){
     var tags=JSON.parse(c.dataset.tags||'[]');
     var tm=!q||c.dataset.title.indexOf(q)!==-1;
     var fm=true;
-    for(var i=0;i<grpKeys.length;i++){
-      var sel=_af[grpKeys[i]];
+    for(var i=0;i<_grpKeys.length;i++){
+      var sel=_af[_grpKeys[i]];
       if(!sel.size)continue;
       var hit=false;
       sel.forEach(function(t){if(tags.indexOf(t)!==-1)hit=true;});
@@ -318,7 +346,7 @@ function toggleCheck(cb,grp,tag){
   applyFilters();
 }
 function resetFilters(){
-  ['wf1','wf2'].forEach(function(k){_af[k].clear();});
+  _grpKeys.forEach(function(k){_af[k].clear();});
   document.querySelectorAll('.fp-pill').forEach(function(b){b.classList.remove('fp-active');});
   document.querySelectorAll('.fp-cb').forEach(function(cb){cb.checked=false;});
   if(_srch)_srch.value='';
@@ -349,14 +377,12 @@ document.addEventListener('DOMContentLoaded',function(){
 </body></html>`;
 }
 
-export function renderWorkoutPage(w, categories) {
-  const catTagMap = makeCatTagMap(categories || []);
-  const activeDurTag = durTagId(w.duration_min);
-  const activeCatTag = w.category ? (catTagMap[w.category] || null) : null;
-  const sidebar = buildWorkoutFilterSidebar(activeDurTag, activeCatTag, categories || [], catTagMap);
+export function renderWorkoutPage(w) {
+  const activeTags = new Set(getTagIds(w));
+  const sidebar = buildWorkoutFilterSidebar(activeTags);
 
   const pageCss = `
-#wp-topbar{position:fixed;top:0;left:250px;right:0;height:52px;background:#ffffff;border-bottom:1px solid #DDD9D0;display:flex;align-items:center;padding:0 20px;gap:12px;z-index:99;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+#wp-topbar{position:fixed;top:0;left:250px;right:0;height:52px;background:#ffffff;border-bottom:1px solid #DDD9D0;display:flex;align-items:center;padding:0 20px;z-index:99;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
 #wp-main{margin-left:250px;margin-top:52px}
 #wp-content{max-width:800px;margin:0 auto;padding:32px 24px 80px}
 .wp-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid #DDD9D0;border-radius:20px;font-size:13px;color:#3A3A34;background:#fff}
@@ -384,7 +410,7 @@ export function renderWorkoutPage(w, categories) {
         </div>`
       : '';
 
-  const tags = [
+  const metaTags = [
     w.category ? `<span class="wp-tag"><i class="fa-solid fa-layer-group"></i>${esc(w.category)}</span>` : '',
     w.duration_min ? `<span class="wp-tag"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span>` : '',
     w.wistia_id ? `<span class="wp-tag"><i class="fa-solid fa-video"></i>Видео</span>` : '',
@@ -417,7 +443,7 @@ ${sidebar}
   <div id="wp-content">
     ${w.category ? `<div style="font-size:11px;font-weight:700;color:#97976A;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">${esc(w.category)}</div>` : ''}
     <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:16px">${esc(w.title)}</h1>
-    ${tags ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${tags}</div>` : ''}
+    ${metaTags ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${metaTags}</div>` : ''}
     ${videoSection}
     ${w.description ? `<div style="background:#fff;border:1px solid #DDD9D0;border-radius:12px;padding:24px;font-size:15px;line-height:1.75;color:#3A3A34">${esc(w.description)}</div>` : ''}
     ${kajabiFallback}
