@@ -4,6 +4,11 @@ function safeJson(str, fallback) {
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function stripComments(html) {
+  if (!html) return html;
+  // Remove complete comments, then any unclosed <!-- tail
+  return html.replace(/<!--[\s\S]*?-->/g, '').replace(/<!--[\s\S]*/g, '').trim();
+}
 
 const NAV_ITEMS = [
   { key: 'dashboard',  label: 'ДАШБОРД',    icon: 'fa-solid fa-house',       url: 'https://www.dreambody.club/portal' },
@@ -84,6 +89,15 @@ const FILTER_GROUPS = [
   ]},
 ];
 
+// Kajabi tgrpXtgY pipe-separated format → filter tag IDs (stored in D1 filter_tags column)
+const TGRP_MAP = {
+  'tgrp1tg1': 'wf1t1', 'tgrp1tg2': 'wf1t2', 'tgrp1tg3': 'wf1t3', 'tgrp1tg4': 'wf1t4',
+  'tgrp2tg1': 'wf2t1', 'tgrp2tg2': 'wf2t2', 'tgrp2tg3': 'wf2t3',
+  'tgrp3tg1': 'wf3t1', 'tgrp3tg2': 'wf3t2', 'tgrp3tg3': 'wf3t3',
+  'tgrp4tg1': 'wf4t1', 'tgrp4tg2': 'wf4t2', 'tgrp4tg3': 'wf4t3', 'tgrp4tg4': 'wf4t4',
+  'tgrp4tg5': 'wf4t5', 'tgrp4tg6': 'wf4t6', 'tgrp4tg7': 'wf4t7', 'tgrp4tg8': 'wf4t8',
+};
+
 // Kajabi filter_tags string values → tag IDs
 const TAG_MAP = {
   '15 мин': 'wf1t1', '30 мин': 'wf1t2', '45 мин': 'wf1t3', '60 мин': 'wf1t4',
@@ -103,10 +117,16 @@ const TAG_MAP = {
 };
 
 function getTagIds(workout) {
-  const raw = safeJson(workout.filter_tags, []);
-  const ids = Array.isArray(raw)
-    ? raw.map(t => TAG_MAP[String(t).toLowerCase().trim()]).filter(Boolean)
-    : [];
+  const raw = workout.filter_tags || '';
+  let ids = [];
+  if (raw.includes('tgrp')) {
+    // Pipe-separated tgrpXtgY format (stored by content migration)
+    ids = raw.split('|').map(t => TGRP_MAP[t.trim()]).filter(Boolean);
+  } else {
+    // Legacy JSON array of Russian strings
+    const arr = safeJson(raw, []);
+    ids = Array.isArray(arr) ? arr.map(t => TAG_MAP[String(t).toLowerCase().trim()]).filter(Boolean) : [];
+  }
   // Infer time bucket from duration_min when filter_tags has no time tag
   if (!ids.some(t => t.startsWith('wf1')) && workout.duration_min) {
     const d = Number(workout.duration_min);
@@ -447,6 +467,16 @@ export function renderWorkoutPage(w) {
   #dbc-chk:checked~#dbc-overlay{display:block!important}
 }
 @media(max-width:600px){#wp-content{padding:20px 16px 60px}}
+.wp-body{background:#fff;border:1px solid #DDD9D0;border-radius:12px;padding:24px 28px;margin-top:28px;font-size:15px;line-height:1.8;color:#3A3A34}
+.wp-body p{margin-bottom:12px}
+.wp-body p:last-child{margin-bottom:0}
+.wp-body ul,.wp-body ol{margin:8px 0 12px 20px}
+.wp-body li{margin-bottom:6px}
+.wp-body h2,.wp-body h3,.wp-body h4{font-weight:700;color:#252420;margin:20px 0 8px}
+.wp-body h3{font-size:16px}
+.wp-body strong{font-weight:600;color:#252420}
+.wp-body img{max-width:100%;height:auto;border-radius:8px;margin:8px 0;display:block}
+.wp-body a{color:#97976A;text-decoration:underline}
 `;
 
   const videoSection = w.wistia_id
@@ -480,7 +510,7 @@ ${sidebar}
     <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:16px">${esc(w.title)}</h1>
     ${metaTags ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${metaTags}</div>` : ''}
     ${videoSection}
-    ${w.description ? `<div style="background:#fff;border:1px solid #DDD9D0;border-radius:12px;padding:24px;font-size:15px;line-height:1.75;color:#3A3A34">${esc(w.description)}</div>` : ''}
+    ${w.body_html ? `<div class="wp-body">${stripComments(w.body_html)}</div>` : w.description ? `<div class="wp-body">${esc(w.description)}</div>` : ''}
     ${kajabiFallback}
   </div>
 </main>
