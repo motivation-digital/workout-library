@@ -16,23 +16,23 @@ const NAV_ITEMS = [
 ];
 
 const FILTER_GROUPS = [
+  { id: 'wf2', label: 'Интенсивность', type: 'pills', tags: [
+    { id: 'wf2t1', label: 'Низкая' },
+    { id: 'wf2t2', label: 'Средняя' },
+    { id: 'wf2t3', label: 'Высокая' },
+  ]},
   { id: 'wf1', label: 'Время', type: 'pills', tags: [
     { id: 'wf1t1', label: '15 мин' },
     { id: 'wf1t2', label: '30 мин' },
     { id: 'wf1t3', label: '45 мин' },
     { id: 'wf1t4', label: '60 мин' },
   ]},
-  { id: 'wf2', label: 'Интенсивность', type: 'accordion', open: true, tags: [
-    { id: 'wf2t1', label: 'Низкая' },
-    { id: 'wf2t2', label: 'Средняя' },
-    { id: 'wf2t3', label: 'Высокая' },
-  ]},
-  { id: 'wf3', label: 'Ваш уровень', type: 'accordion', open: true, tags: [
+  { id: 'wf3', label: 'Ваш уровень', type: 'accordion', open: false, tags: [
     { id: 'wf3t1', label: 'Начинающий' },
     { id: 'wf3t2', label: 'Средний' },
     { id: 'wf3t3', label: 'Продвинутый' },
   ]},
-  { id: 'wf4', label: 'Часть тела', type: 'accordion', open: true, tags: [
+  { id: 'wf4', label: 'Часть тела', type: 'accordion', open: false, tags: [
     { id: 'wf4t1', label: 'Всё тело' },
     { id: 'wf4t2', label: 'Руки' },
     { id: 'wf4t3', label: 'Грудь' },
