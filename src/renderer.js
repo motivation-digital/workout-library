@@ -226,8 +226,12 @@ details.fp-group[open]>summary.fp-label::after{transform:rotate(-135deg);margin-
 #wl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-content:start}
 .wc{display:flex;flex-direction:column;background:#fff;border:1px solid #DDD9D0;border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s}
 .wc:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.10)}
-.wc-img{margin:8px 14px 0;border-radius:8px;border:1px solid #DDD9D0;overflow:hidden;aspect-ratio:16/10;background:#DDD9D0;flex-shrink:0}
+.wc-img{margin:8px 14px 0;border-radius:8px;border:1px solid #DDD9D0;overflow:hidden;aspect-ratio:16/10;background:#DDD9D0;flex-shrink:0;position:relative}
 .wc-img img{width:100%;height:100%;object-fit:cover;display:block}
+.wc-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);opacity:0;transition:opacity .2s,background .2s}
+.wc:hover .wc-play{opacity:1;background:rgba(0,0,0,0.22)}
+.wc-play-btn{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.18)}
+.wc-play-btn i{color:#3A3A34;font-size:18px;margin-left:3px}
 .wc-body{padding:8px 14px 12px;display:flex;flex-direction:column;flex:1}
 .wc-cat{font-size:11px;font-weight:600;color:#97976A;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px}
 .wc-title{font-size:12px;font-weight:600;color:#3A3A34;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;margin-bottom:4px;flex:1}
@@ -293,15 +297,15 @@ export function renderDashboard(workouts, categories) {
     const tags = getTagIds(w);
     const tagsAttr = JSON.stringify(tags).replace(/"/g, '&quot;');
     const dur = w.duration_min ? `<span class="wc-stat"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span>` : '';
-    const vid = w.wistia_id ? `<span class="wc-stat"><i class="fa-solid fa-play"></i>Видео</span>` : '';
     const img = w.image_url
       ? `<img src="${esc(w.image_url)}" alt="${esc(w.title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">`
       : `<div style="width:100%;height:100%;background:#DDD9D0"></div>`;
+    const play = `<div class="wc-play"><div class="wc-play-btn"><i class="fa-solid fa-play"></i></div></div>`;
     return `<a class="wc" href="/${esc(w.kajabi_post_id)}" data-slug="${esc(w.kajabi_post_id)}" data-title="${esc(w.title.toLowerCase())}" data-tags="${tagsAttr}">
-  <div class="wc-img">${img}</div>
+  <div class="wc-img">${img}${play}</div>
   <div class="wc-body">
     <div class="wc-title">${esc(w.title)}</div>
-    <div class="wc-stats">${dur}${vid}</div>
+    <div class="wc-stats">${dur}</div>
   </div>
 </a>`;
   }).join('\n');
