@@ -16,23 +16,23 @@ const NAV_ITEMS = [
 ];
 
 const FILTER_GROUPS = [
-  { id: 'wf2', label: 'Интенсивность', type: 'pills', tags: [
-    { id: 'wf2t1', label: 'Низкая' },
-    { id: 'wf2t2', label: 'Средняя' },
-    { id: 'wf2t3', label: 'Высокая' },
-  ]},
   { id: 'wf1', label: 'Время', type: 'pills', tags: [
     { id: 'wf1t1', label: '15 мин' },
     { id: 'wf1t2', label: '30 мин' },
     { id: 'wf1t3', label: '45 мин' },
     { id: 'wf1t4', label: '60 мин' },
   ]},
-  { id: 'wf3', label: 'Ваш уровень', type: 'accordion', open: false, tags: [
+  { id: 'wf2', label: 'Интенсивность', type: 'accordion', open: true, tags: [
+    { id: 'wf2t1', label: 'Низкая' },
+    { id: 'wf2t2', label: 'Средняя' },
+    { id: 'wf2t3', label: 'Высокая' },
+  ]},
+  { id: 'wf3', label: 'Ваш уровень', type: 'accordion', open: true, tags: [
     { id: 'wf3t1', label: 'Начинающий' },
     { id: 'wf3t2', label: 'Средний' },
     { id: 'wf3t3', label: 'Продвинутый' },
   ]},
-  { id: 'wf4', label: 'Часть тела', type: 'accordion', open: false, tags: [
+  { id: 'wf4', label: 'Часть тела', type: 'accordion', open: true, tags: [
     { id: 'wf4t1', label: 'Всё тело' },
     { id: 'wf4t2', label: 'Руки' },
     { id: 'wf4t3', label: 'Грудь' },
@@ -42,72 +42,22 @@ const FILTER_GROUPS = [
     { id: 'wf4t7', label: 'Ноги' },
     { id: 'wf4t8', label: 'Тазовое дно' },
   ]},
-  { id: 'wf5', label: 'Тип тренировки', type: 'accordion', open: false, tags: [
-    { id: 'wf5t1',  label: 'Силовая' },
-    { id: 'wf5t2',  label: 'Кардио-сила' },
-    { id: 'wf5t3',  label: 'Кардио' },
-    { id: 'wf5t4',  label: 'Растяжка' },
-    { id: 'wf5t5',  label: 'Мобильность' },
-    { id: 'wf5t6',  label: 'Разминка' },
-    { id: 'wf5t7',  label: 'Заминка' },
-    { id: 'wf5t8',  label: 'Координация' },
-    { id: 'wf5t9',  label: 'Пилатес' },
-    { id: 'wf5t10', label: 'Фит-тест' },
-    { id: 'wf5t11', label: 'Восстановление' },
-  ]},
-  { id: 'wf6', label: 'Программы', type: 'accordion', open: false, tags: [
-    { id: 'wf6t1',  label: 'Основы (для начинающих)' },
-    { id: 'wf6t2',  label: 'Похудение' },
-    { id: 'wf6t3',  label: 'Тонус' },
-    { id: 'wf6t4',  label: 'Вызов 21' },
-    { id: 'wf6t5',  label: 'Пятиминутки' },
-    { id: 'wf6t6',  label: 'Осанка' },
-    { id: 'wf6t7',  label: 'Йога-фит' },
-    { id: 'wf6t8',  label: 'Шпагаты' },
-    { id: 'wf6t9',  label: 'Про-живот' },
-    { id: 'wf6t10', label: 'Гибкая спина' },
-    { id: 'wf6t11', label: 'Летний кач' },
-  ]},
-  { id: 'wf7', label: 'Инвентарь', type: 'accordion', open: false, tags: [
-    { id: 'wf7t1',  label: 'Без инвентаря' },
-    { id: 'wf7t2',  label: 'Гантели' },
-    { id: 'wf7t3',  label: 'Резинка' },
-    { id: 'wf7t4',  label: 'Блоки' },
-    { id: 'wf7t5',  label: 'Палка' },
-    { id: 'wf7t6',  label: 'Ремень' },
-    { id: 'wf7t7',  label: 'Фоам-роллер' },
-    { id: 'wf7t8',  label: 'Мяч' },
-    { id: 'wf7t9',  label: 'Стул' },
-    { id: 'wf7t10', label: 'Утяжелители' },
-    { id: 'wf7t11', label: 'Фитбол' },
-    { id: 'wf7t12', label: 'Слайдеры' },
-  ]},
 ];
 
-// Kajabi filter_tags string values → tag IDs
-const TAG_MAP = {
-  '15 мин': 'wf1t1', '30 мин': 'wf1t2', '45 мин': 'wf1t3', '60 мин': 'wf1t4',
-  'низкая': 'wf2t1', 'средняя': 'wf2t2', 'высокая': 'wf2t3',
-  'начинающий': 'wf3t1', 'средний': 'wf3t2', 'продвинутый': 'wf3t3',
-  'всё тело': 'wf4t1', 'руки': 'wf4t2', 'грудь': 'wf4t3', 'спина': 'wf4t4',
-  'пресс': 'wf4t5', 'ягодицы': 'wf4t6', 'ноги': 'wf4t7', 'тазовое дно': 'wf4t8',
-  'силовая': 'wf5t1', 'кардио-сила': 'wf5t2', 'кардио': 'wf5t3', 'растяжка': 'wf5t4',
-  'мобильность': 'wf5t5', 'разминка': 'wf5t6', 'заминка': 'wf5t7', 'координация': 'wf5t8',
-  'пилатес': 'wf5t9', 'фит-тест': 'wf5t10', 'восстановление': 'wf5t11',
-  'основы (для начинающих)': 'wf6t1', 'похудение': 'wf6t2', 'тонус': 'wf6t3',
-  'вызов 21': 'wf6t4', 'пятиминутки': 'wf6t5', 'осанка': 'wf6t6', 'йога-фит': 'wf6t7',
-  'шпагаты': 'wf6t8', 'про-живот': 'wf6t9', 'гибкая спина': 'wf6t10', 'летний кач': 'wf6t11',
-  'без инвентаря': 'wf7t1', 'гантели': 'wf7t2', 'резинка': 'wf7t3', 'блоки': 'wf7t4',
-  'палка': 'wf7t5', 'ремень': 'wf7t6', 'фоам-роллер': 'wf7t7', 'мяч': 'wf7t8',
-  'стул': 'wf7t9', 'утяжелители': 'wf7t10', 'фитбол': 'wf7t11', 'слайдеры': 'wf7t12',
+// Kajabi tgrpXtgY pipe-separated tag IDs → filter tag IDs
+// tgrp1=Time, tgrp2=Intensity, tgrp3=Level, tgrp4=BodyPart
+const TGRP_MAP = {
+  'tgrp1tg1': 'wf1t1', 'tgrp1tg2': 'wf1t2', 'tgrp1tg3': 'wf1t3', 'tgrp1tg4': 'wf1t4',
+  'tgrp2tg1': 'wf2t1', 'tgrp2tg2': 'wf2t2', 'tgrp2tg3': 'wf2t3',
+  'tgrp3tg1': 'wf3t1', 'tgrp3tg2': 'wf3t2', 'tgrp3tg3': 'wf3t3',
+  'tgrp4tg1': 'wf4t1', 'tgrp4tg2': 'wf4t2', 'tgrp4tg3': 'wf4t3', 'tgrp4tg4': 'wf4t4',
+  'tgrp4tg5': 'wf4t5', 'tgrp4tg6': 'wf4t6', 'tgrp4tg7': 'wf4t7', 'tgrp4tg8': 'wf4t8',
 };
 
 function getTagIds(workout) {
-  const raw = safeJson(workout.filter_tags, []);
-  const ids = Array.isArray(raw)
-    ? raw.map(t => TAG_MAP[String(t).toLowerCase().trim()]).filter(Boolean)
-    : [];
-  // Infer time bucket from duration_min when filter_tags has no time tag
+  const raw = workout.filter_tags || '';
+  const ids = raw.split('|').map(t => TGRP_MAP[t.trim()]).filter(Boolean);
+  // Infer time bucket from duration_min when no time tag present
   if (!ids.some(t => t.startsWith('wf1')) && workout.duration_min) {
     const d = Number(workout.duration_min);
     if (d <= 20) ids.push('wf1t1');
@@ -446,6 +396,16 @@ export function renderWorkoutPage(w) {
   #dbc-chk:checked~#dbc-overlay{display:block!important}
 }
 @media(max-width:600px){#wp-content{padding:20px 16px 60px}}
+.wp-body{background:#fff;border:1px solid #DDD9D0;border-radius:12px;padding:24px 28px;margin-top:28px;font-size:15px;line-height:1.8;color:#3A3A34}
+.wp-body p{margin-bottom:12px}
+.wp-body p:last-child{margin-bottom:0}
+.wp-body ul,.wp-body ol{margin:8px 0 12px 20px}
+.wp-body li{margin-bottom:6px}
+.wp-body h2,.wp-body h3,.wp-body h4{font-weight:700;color:#252420;margin:20px 0 8px}
+.wp-body h3{font-size:16px}
+.wp-body strong{font-weight:600;color:#252420}
+.wp-body img{max-width:100%;height:auto;border-radius:8px;margin:8px 0;display:block}
+.wp-body a{color:#97976A;text-decoration:underline}
 `;
 
   const videoSection = w.wistia_id
@@ -494,7 +454,7 @@ ${sidebar}
     <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:16px">${esc(w.title)}</h1>
     ${metaTags ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${metaTags}</div>` : ''}
     ${videoSection}
-    ${w.description ? `<div style="background:#fff;border:1px solid #DDD9D0;border-radius:12px;padding:24px;font-size:15px;line-height:1.75;color:#3A3A34">${esc(w.description)}</div>` : ''}
+    ${w.body_html ? `<div class="wp-body">${w.body_html}</div>` : w.description ? `<div class="wp-body">${esc(w.description)}</div>` : ''}
     ${kajabiFallback}
   </div>
 </main>
