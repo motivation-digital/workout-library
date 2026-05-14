@@ -125,6 +125,18 @@ const TAG_MAP = {
   'стул': 'wf7t9', 'утяжелители': 'wf7t10', 'фитбол': 'wf7t11', 'слайдеры': 'wf7t12',
 };
 
+const TAG_LABELS = {};
+FILTER_GROUPS.forEach(grp => { grp.tags.forEach(t => { TAG_LABELS[t.id] = t.label; }); });
+
+function getCardPills(tagIds) {
+  const result = [];
+  for (const grpId of ['wf2', 'wf1', 'wf3']) {
+    const tag = tagIds.find(id => id.startsWith(grpId + 't'));
+    if (tag && TAG_LABELS[tag]) result.push(TAG_LABELS[tag]);
+  }
+  return result;
+}
+
 function getTagIds(workout) {
   const raw = workout.filter_tags || '';
   let ids = [];
@@ -267,6 +279,8 @@ details.fp-group[open]>summary.fp-label::after{transform:rotate(-135deg);margin-
 .wc-stats{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:6px}
 .wc-stat{display:flex;align-items:center;gap:4px;font-size:11px;color:#6A6A62}
 .wc-stat i{color:#97976A;font-size:11px}
+.wc-pills{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
+.wc-pill-tag{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;border:1px solid #DDD9D0;background:#F7F4EC;color:#6A6A62;white-space:nowrap}
 @media(max-width:1300px){#wl-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){#wl-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){#wl-grid{grid-template-columns:1fr}}
@@ -330,10 +344,13 @@ export function renderDashboard(workouts, categories) {
       ? `<img src="${esc(w.image_url)}" alt="${esc(w.title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">`
       : `<div style="width:100%;height:100%;background:#DDD9D0"></div>`;
     const play = `<div class="wc-play"><div class="wc-play-btn"><i class="fa-solid fa-play"></i></div></div>`;
+    const pills = getCardPills(tags);
+    const pillsHtml = pills.length ? `<div class="wc-pills">${pills.map(p => `<span class="wc-pill-tag">${esc(p)}</span>`).join('')}</div>` : '';
     return `<a class="wc" href="/${esc(w.kajabi_post_id)}" data-slug="${esc(w.kajabi_post_id)}" data-title="${esc(w.title.toLowerCase())}" data-tags="${tagsAttr}">
   <div class="wc-img">${img}${play}</div>
   <div class="wc-body">
     <div class="wc-title">${esc(w.title)}</div>
+    ${pillsHtml}
     <div class="wc-stats">${dur}</div>
   </div>
 </a>`;
@@ -503,6 +520,11 @@ export function renderWorkoutPage(w) {
     w.duration_min ? `<span class="wp-tag"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span>` : '',
   ].filter(Boolean).join('');
 
+  const postPills = getCardPills(Array.from(activeTags));
+  const postPillsHtml = postPills.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">${postPills.map(p => `<span class="wp-tag">${esc(p)}</span>`).join('')}</div>`
+    : '';
+
   const kajabiFallback = !w.wistia_id && w.kajabi_url
     ? `<div style="margin-top:28px"><a href="${esc(w.kajabi_url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#97976A;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600"><i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть тренировку</a></div>`
     : '';
@@ -514,6 +536,10 @@ export function renderWorkoutPage(w) {
 <label for="dbc-chk" id="dbc-ham" style="display:none;position:fixed;top:10px;left:10px;z-index:102;align-items:center;justify-content:center;cursor:pointer;padding:6px;border-radius:4px"><i class="fa-solid fa-bars" style="font-size:32px;color:#3A3A34"></i></label>
 ${sidebar}
 <div id="dbc-topbar">
+  <div id="wl-search-wrap">
+    <i class="fa-solid fa-magnifying-glass srch-icon"></i>
+    <input id="wl-search" type="text" placeholder="Быстрый поиск" onkeydown="if(event.key==='Enter'&&this.value.trim())window.location='/?q='+encodeURIComponent(this.value.trim())">
+  </div>
   <div id="tb-profile">
     <button id="tb-profile-btn" onclick="var d=document.getElementById('tb-dd');d.style.display=d.style.display==='block'?'none':'block'">
       <div id="tb-avatar"><i class="fa-solid fa-user"></i></div>
@@ -531,6 +557,7 @@ ${sidebar}
     <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:16px">${esc(w.title)}</h1>
     ${metaTags ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${metaTags}</div>` : ''}
     ${videoSection}
+    ${postPillsHtml}
     ${w.body_html ? `<div class="wp-body">${stripComments(w.body_html)}</div>` : w.description ? `<div class="wp-body">${esc(w.description)}</div>` : ''}
     ${kajabiFallback}
   </div>
