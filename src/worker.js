@@ -76,9 +76,13 @@ export default {
     const numericPath = path.match(/^\/(\d+)$/);
     if (numericPath) {
       const postId = numericPath[1];
-      const row = await env.DB_CONTENT.prepare('SELECT * FROM workout_library WHERE kajabi_post_id = ? AND status = ?').bind(postId, 'active').first();
+      const [row, catRes] = await Promise.all([
+        env.DB_CONTENT.prepare('SELECT * FROM workout_library WHERE kajabi_post_id = ? AND status = ?').bind(postId, 'active').first(),
+        env.DB_CONTENT.prepare('SELECT DISTINCT category FROM workout_library WHERE status = ? AND category IS NOT NULL ORDER BY category').bind('active').all(),
+      ]);
       if (!row) return html('<h1>Not found</h1>', 404);
-      return html(renderWorkoutPage(row));
+      const categories = catRes.results.map(r => r.category).filter(Boolean);
+      return html(renderWorkoutPage(row, categories));
     }
 
     // Index
