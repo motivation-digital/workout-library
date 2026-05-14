@@ -496,7 +496,7 @@ export function renderWorkoutPage(w) {
 
   const pageCss = `
 #wp-main{margin-left:250px;margin-top:52px}
-#wp-content{max-width:800px;margin:0 auto;padding:32px 24px 80px}
+#wp-content{max-width:960px;margin:0 auto;padding:32px 24px 80px}
 .wp-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid #DDD9D0;border-radius:20px;font-size:13px;color:#3A3A34;background:#fff}
 .wp-tag i{color:#97976A;font-size:12px}
 @media(max-width:1440px){
@@ -518,11 +518,6 @@ export function renderWorkoutPage(w) {
 .wp-body strong{font-weight:600;color:#252420}
 .wp-body img{max-width:100%;height:auto;border-radius:8px;margin:8px 0;display:block}
 .wp-body a{color:#97976A;text-decoration:underline}
-.wp-video-row{display:flex;gap:20px;align-items:flex-start;margin-bottom:20px}
-.wp-video-col{flex:1;min-width:0}
-.wp-meta-col{width:160px;flex-shrink:0;display:flex;flex-direction:column;gap:16px;padding-top:4px}
-.wp-meta-key{font-size:10px;font-weight:700;color:#8A8A82;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
-@media(max-width:700px){.wp-video-row{flex-direction:column}.wp-meta-col{width:100%;flex-direction:row;flex-wrap:wrap;gap:10px}}
 `;
 
   const bmBtn = `<div class="hero-actions"><button class="hero-action" id="bm-btn" onclick="toggleBm()" title="Сохранить"><i class="fa-regular fa-bookmark"></i></button></div>`;
@@ -543,21 +538,15 @@ export function renderWorkoutPage(w) {
         </div>`
       : '';
 
-  const durTag = w.duration_min
-    ? `<div style="margin-top:12px"><span class="wp-tag"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span></div>`
-    : '';
-
-  const pillGroupLabels = ['Интенсивность','Время','Уровень'];
+  const pillGroupIcons = ['fa-solid fa-fire-flame-curved','fa-regular fa-clock','fa-solid fa-signal'];
   const postPills = getCardPills(Array.from(activeTags));
-  const metaColHtml = postPills.length
-    ? `<div class="wp-meta-col">${postPills.map((p,i) =>
-        `<div><div class="wp-meta-key">${pillGroupLabels[i]||''}</div><span class="wp-tag">${esc(p)}</span></div>`
+  const pillsRowHtml = postPills.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">${postPills.map((p,i) =>
+        `<span class="wp-tag"><i class="${pillGroupIcons[i]}"></i>${esc(p)}</span>`
       ).join('')}</div>`
     : '';
 
-  const videoRowHtml = videoSection
-    ? `<div class="wp-video-row"><div class="wp-video-col">${videoSection}${durTag}</div>${metaColHtml}</div>`
-    : durTag ? `<div style="margin-bottom:16px">${durTag}</div>` : '';
+  const bodyContent = w.body_html ? stripComments(w.body_html) : (w.description || '');
 
   const kajabiFallback = !w.wistia_id && w.kajabi_url
     ? `<div style="margin-top:28px"><a href="${esc(w.kajabi_url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#97976A;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600"><i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть тренировку</a></div>`
@@ -589,8 +578,8 @@ ${sidebar}
 <main id="wp-main">
   <div id="wp-content">
     <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:20px">${esc(w.title)}</h1>
-    ${videoRowHtml}
-    ${w.body_html ? `<div class="wp-body">${stripComments(w.body_html)}</div>` : w.description ? `<div class="wp-body">${esc(w.description)}</div>` : ''}
+    ${videoSection ? `<div style="margin-bottom:20px">${videoSection}${pillsRowHtml}</div>` : pillsRowHtml ? `<div style="margin-bottom:16px">${pillsRowHtml}</div>` : ''}
+    ${bodyContent.trim() ? `<div class="wp-body">${bodyContent}</div>` : ''}
     ${kajabiFallback}
   </div>
 </main>
