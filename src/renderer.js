@@ -463,7 +463,7 @@ export function renderWorkoutPage(w) {
   const sidebar = buildWorkoutFilterSidebar(activeTags);
 
   const pageCss = `
-#wp-main{margin-left:250px;margin-top:0}
+#wp-main{margin-left:250px;margin-top:52px}
 #wp-content{max-width:800px;margin:0 auto;padding:32px 24px 80px}
 .wp-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid #DDD9D0;border-radius:20px;font-size:13px;color:#3A3A34;background:#fff}
 .wp-tag i{color:#97976A;font-size:12px}
@@ -513,6 +513,18 @@ export function renderWorkoutPage(w) {
 <input type="checkbox" id="dbc-chk" style="position:fixed;opacity:0;pointer-events:none;z-index:-1">
 <label for="dbc-chk" id="dbc-ham" style="display:none;position:fixed;top:10px;left:10px;z-index:102;align-items:center;justify-content:center;cursor:pointer;padding:6px;border-radius:4px"><i class="fa-solid fa-bars" style="font-size:32px;color:#3A3A34"></i></label>
 ${sidebar}
+<div id="dbc-topbar">
+  <div id="tb-profile">
+    <button id="tb-profile-btn" onclick="var d=document.getElementById('tb-dd');d.style.display=d.style.display==='block'?'none':'block'">
+      <div id="tb-avatar"><i class="fa-solid fa-user"></i></div>
+      <i class="fa-solid fa-chevron-down" style="font-size:10px;color:#8A8A82;margin-left:2px"></i>
+    </button>
+    <div id="tb-dd">
+      <a href="https://www.dreambody.club/profile">Профиль</a>
+      <a href="https://www.dreambody.club/logout">Выйти</a>
+    </div>
+  </div>
+</div>
 <label for="dbc-chk" id="dbc-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:98"></label>
 <main id="wp-main">
   <div id="wp-content">
@@ -523,5 +535,11 @@ ${sidebar}
     ${kajabiFallback}
   </div>
 </main>
+<script>
+document.addEventListener('click',function(e){
+  var dd=document.getElementById('tb-dd');
+  if(dd&&!document.getElementById('tb-profile').contains(e.target))dd.style.display='none';
+});
+<\/script>
 </body></html>`;
 }
