@@ -281,6 +281,13 @@ details.fp-group[open]>summary.fp-label::after{transform:rotate(-135deg);margin-
 .wc-stat i{color:#97976A;font-size:11px}
 .wc-pills{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
 .wc-pill-tag{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;border:1px solid #DDD9D0;background:#F7F4EC;color:#6A6A62;white-space:nowrap}
+.hero-actions{position:absolute;top:12px;right:12px;display:flex;gap:8px;z-index:10}
+.hero-action{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#3A3A34;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.hero-action:hover{background:#fff;transform:scale(1.08)}
+.hero-action.active{background:#97976A;color:#fff}
+.fp-saved{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-bottom:12px;padding:7px 12px;border:1px solid #DDD9D0;border-radius:8px;background:#F7F4EC;color:#3A3A34;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.fp-saved:hover{border-color:#97976A;color:#97976A}
+.fp-saved.active{background:#97976A;border-color:#97976A;color:#fff}
 @media(max-width:1300px){#wl-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){#wl-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){#wl-grid{grid-template-columns:1fr}}
@@ -388,6 +395,7 @@ ${sidebar}
     <span id="mob-count" style="font-size:13px;font-weight:600;color:#97976A">${workouts.length} тренировок</span>
   </div>
   <div id="wl-filters">
+    <button class="fp-saved" id="fp-saved-btn" onclick="toggleSaved()"><i class="fa-regular fa-bookmark"></i> Сохранённые</button>
     <a href="#" class="fp-reset" onclick="resetFilters();return false">Сбросить фильтры</a>
     ${filterHtml}
   </div>
@@ -398,6 +406,7 @@ ${sidebar}
 <script>
 var _af=${afInit};
 var _grpKeys=${JSON.stringify(grpKeys)};
+var _savedOnly=false;
 var _cards,_cnt,_mcnt,_srch;
 function _init(){
   _cards=document.querySelectorAll('.wc');
@@ -420,7 +429,8 @@ function applyFilters(){
       sel.forEach(function(t){if(tags.indexOf(t)!==-1)hit=true;});
       if(!hit){fm=false;break;}
     }
-    var show=tm&&fm;
+    var sm=!_savedOnly||localStorage.getItem('bm_'+c.dataset.slug)==='1';
+    var show=tm&&fm&&sm;
     c.style.display=show?'':'none';
     if(show)vis++;
   });
@@ -443,11 +453,18 @@ function toggleCheck(cb,grp,tag){
   if(cb.checked)_af[grp].add(tag);else _af[grp].delete(tag);
   applyFilters();
 }
+function toggleSaved(){
+  _savedOnly=!_savedOnly;
+  var b=document.getElementById('fp-saved-btn');if(b)b.classList.toggle('active',_savedOnly);
+  applyFilters();
+}
 function resetFilters(){
   _grpKeys.forEach(function(k){_af[k].clear();});
   document.querySelectorAll('.fp-pill').forEach(function(b){b.classList.remove('fp-active');});
   document.querySelectorAll('.fp-cb').forEach(function(cb){cb.checked=false;});
   if(_srch)_srch.value='';
+  _savedOnly=false;
+  var sb=document.getElementById('fp-saved-btn');if(sb)sb.classList.remove('active');
   applyFilters();
 }
 document.addEventListener('DOMContentLoaded',function(){
@@ -503,27 +520,46 @@ export function renderWorkoutPage(w) {
 .wp-body strong{font-weight:600;color:#252420}
 .wp-body img{max-width:100%;height:auto;border-radius:8px;margin:8px 0;display:block}
 .wp-body a{color:#97976A;text-decoration:underline}
+.wp-video-row{display:flex;gap:20px;align-items:flex-start;margin-bottom:20px}
+.wp-video-col{flex:1;min-width:0}
+.wp-meta-col{width:160px;flex-shrink:0;display:flex;flex-direction:column;gap:16px;padding-top:4px}
+.wp-meta-key{font-size:10px;font-weight:700;color:#8A8A82;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+@media(max-width:700px){.wp-video-row{flex-direction:column}.wp-meta-col{width:100%;flex-direction:row;flex-wrap:wrap;gap:10px}}
 `;
 
+  const bmBtn = `<div class="hero-actions"><button class="hero-action" id="bm-btn" onclick="toggleBm()" title="Сохранить"><i class="fa-regular fa-bookmark"></i></button></div>`;
   const videoSection = w.wistia_id
-    ? `<div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:28px;background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.12)">
-        <iframe src="https://fast.wistia.net/embed/iframe/${esc(w.wistia_id)}?videoFoam=true&playerColor=97976A" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen style="width:100%;height:100%;display:block"></iframe>
+    ? `<div style="position:relative">
+        <div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.12)">
+          <iframe src="https://fast.wistia.net/embed/iframe/${esc(w.wistia_id)}?videoFoam=true&playerColor=97976A" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen style="width:100%;height:100%;display:block"></iframe>
+        </div>
+        ${bmBtn}
       </div>`
     : w.image_url
-      ? `<div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:28px;position:relative;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
-          <img src="${esc(w.image_url)}" alt="${esc(w.title)}" style="width:100%;height:100%;object-fit:cover;display:block">
-          ${w.kajabi_url ? `<a href="${esc(w.kajabi_url)}" target="_blank" rel="noopener" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);text-decoration:none"><div style="width:60px;height:60px;background:rgba(250,250,245,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.15)"><i class="fa-solid fa-play" style="font-size:20px;color:#3A3A34;margin-left:4px"></i></div></a>` : ''}
+      ? `<div style="position:relative">
+          <div style="position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
+            <img src="${esc(w.image_url)}" alt="${esc(w.title)}" style="width:100%;height:100%;object-fit:cover;display:block">
+            ${w.kajabi_url ? `<a href="${esc(w.kajabi_url)}" target="_blank" rel="noopener" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);text-decoration:none"><div style="width:60px;height:60px;background:rgba(250,250,245,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.15)"><i class="fa-solid fa-play" style="font-size:20px;color:#3A3A34;margin-left:4px"></i></div></a>` : ''}
+          </div>
+          ${bmBtn}
         </div>`
       : '';
 
-  const metaTags = [
-    w.duration_min ? `<span class="wp-tag"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span>` : '',
-  ].filter(Boolean).join('');
-
-  const postPills = getCardPills(Array.from(activeTags));
-  const postPillsHtml = postPills.length
-    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">${postPills.map(p => `<span class="wp-tag">${esc(p)}</span>`).join('')}</div>`
+  const durTag = w.duration_min
+    ? `<div style="margin-top:12px"><span class="wp-tag"><i class="fa-regular fa-clock"></i>${w.duration_min} мин</span></div>`
     : '';
+
+  const pillGroupLabels = ['Интенсивность','Время','Уровень'];
+  const postPills = getCardPills(Array.from(activeTags));
+  const metaColHtml = postPills.length
+    ? `<div class="wp-meta-col">${postPills.map((p,i) =>
+        `<div><div class="wp-meta-key">${pillGroupLabels[i]||''}</div><span class="wp-tag">${esc(p)}</span></div>`
+      ).join('')}</div>`
+    : '';
+
+  const videoRowHtml = videoSection
+    ? `<div class="wp-video-row"><div class="wp-video-col">${videoSection}${durTag}</div>${metaColHtml}</div>`
+    : durTag ? `<div style="margin-bottom:16px">${durTag}</div>` : '';
 
   const kajabiFallback = !w.wistia_id && w.kajabi_url
     ? `<div style="margin-top:28px"><a href="${esc(w.kajabi_url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#97976A;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600"><i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть тренировку</a></div>`
@@ -554,15 +590,17 @@ ${sidebar}
 <label for="dbc-chk" id="dbc-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:98"></label>
 <main id="wp-main">
   <div id="wp-content">
-    <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:16px">${esc(w.title)}</h1>
-    ${metaTags ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">${metaTags}</div>` : ''}
-    ${videoSection}
-    ${postPillsHtml}
+    <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:20px">${esc(w.title)}</h1>
+    ${videoRowHtml}
     ${w.body_html ? `<div class="wp-body">${stripComments(w.body_html)}</div>` : w.description ? `<div class="wp-body">${esc(w.description)}</div>` : ''}
     ${kajabiFallback}
   </div>
 </main>
 <script>
+var SLUG='${esc(w.kajabi_post_id)}',BM_KEY='bm_'+SLUG;
+function toggleBm(){var s=localStorage.getItem(BM_KEY)==='1';if(s){localStorage.removeItem(BM_KEY);setBm(false);}else{localStorage.setItem(BM_KEY,'1');setBm(true);}}
+function setBm(on){var b=document.getElementById('bm-btn');if(!b)return;b.classList.toggle('active',on);b.querySelector('i').className=on?'fa-solid fa-bookmark':'fa-regular fa-bookmark';}
+document.addEventListener('DOMContentLoaded',function(){setBm(localStorage.getItem(BM_KEY)==='1');});
 document.addEventListener('click',function(e){
   var dd=document.getElementById('tb-dd');
   if(dd&&!document.getElementById('tb-profile').contains(e.target))dd.style.display='none';
