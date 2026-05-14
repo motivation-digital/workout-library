@@ -520,31 +520,26 @@ export function renderWorkoutPage(w) {
 .wp-body a{color:#97976A;text-decoration:underline}
 `;
 
-  const bmBtn = `<div class="hero-actions"><button class="hero-action" id="bm-btn" onclick="toggleBm()" title="Сохранить"><i class="fa-regular fa-bookmark"></i></button></div>`;
   const videoSection = w.wistia_id
-    ? `<div style="position:relative">
-        <div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.12)">
-          <iframe src="https://fast.wistia.net/embed/iframe/${esc(w.wistia_id)}?videoFoam=true&playerColor=97976A" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen style="width:100%;height:100%;display:block"></iframe>
-        </div>
-        ${bmBtn}
+    ? `<div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.12)">
+        <iframe src="https://fast.wistia.net/embed/iframe/${esc(w.wistia_id)}?videoFoam=true&playerColor=97976A" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen style="width:100%;height:100%;display:block"></iframe>
       </div>`
     : w.image_url
-      ? `<div style="position:relative">
-          <div style="position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
-            <img src="${esc(w.image_url)}" alt="${esc(w.title)}" style="width:100%;height:100%;object-fit:cover;display:block">
-            ${w.kajabi_url ? `<a href="${esc(w.kajabi_url)}" target="_blank" rel="noopener" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);text-decoration:none"><div style="width:60px;height:60px;background:rgba(250,250,245,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.15)"><i class="fa-solid fa-play" style="font-size:20px;color:#3A3A34;margin-left:4px"></i></div></a>` : ''}
-          </div>
-          ${bmBtn}
+      ? `<div style="position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
+          <img src="${esc(w.image_url)}" alt="${esc(w.title)}" style="width:100%;height:100%;object-fit:cover;display:block">
+          ${w.kajabi_url ? `<a href="${esc(w.kajabi_url)}" target="_blank" rel="noopener" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);text-decoration:none"><div style="width:60px;height:60px;background:rgba(250,250,245,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.15)"><i class="fa-solid fa-play" style="font-size:20px;color:#3A3A34;margin-left:4px"></i></div></a>` : ''}
         </div>`
       : '';
 
   const pillGroupIcons = ['fa-solid fa-fire-flame-curved','fa-regular fa-clock','fa-solid fa-signal'];
   const postPills = getCardPills(Array.from(activeTags));
-  const pillsRowHtml = postPills.length
-    ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">${postPills.map((p,i) =>
-        `<span class="wp-tag"><i class="${pillGroupIcons[i]}"></i>${esc(p)}</span>`
-      ).join('')}</div>`
-    : '';
+  const pillsHtml = postPills.map((p,i) =>
+    `<span class="wp-tag"><i class="${pillGroupIcons[i]}"></i>${esc(p)}</span>`
+  ).join('');
+  const belowVideoHtml = `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+    <div style="display:flex;flex-wrap:wrap;gap:10px">${pillsHtml}</div>
+    <button class="hero-action" id="bm-btn" onclick="toggleBm()" title="Сохранить" style="flex-shrink:0;margin-left:14px"><i class="fa-regular fa-bookmark"></i></button>
+  </div>`;
 
   const bodyContent = w.body_html ? stripComments(w.body_html) : (w.description || '');
 
@@ -578,7 +573,7 @@ ${sidebar}
 <main id="wp-main">
   <div id="wp-content">
     <h1 style="font-size:26px;font-weight:700;color:#252420;line-height:1.25;margin-bottom:20px">${esc(w.title)}</h1>
-    ${videoSection ? `<div style="margin-bottom:20px">${videoSection}${pillsRowHtml}</div>` : pillsRowHtml ? `<div style="margin-bottom:16px">${pillsRowHtml}</div>` : ''}
+    ${videoSection ? `<div style="margin-bottom:20px">${videoSection}${belowVideoHtml}</div>` : `<div style="margin-bottom:16px">${belowVideoHtml}</div>`}
     ${bodyContent.trim() ? `<div class="wp-body">${bodyContent}</div>` : ''}
     ${kajabiFallback}
   </div>
